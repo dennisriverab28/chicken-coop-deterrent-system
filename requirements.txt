@@ -1,0 +1,7 @@
+RPi.GPIO
+requests
+playsound
+streamlit
+pandas
+matplotlib
+sqlite3
