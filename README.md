@@ -1,138 +1,105 @@
-# Chicken Coop Automated Deterrent System
+<p align="center">
+  <img src="docs/banner.svg" alt="Chicken Coop Deterrent System" width="100%">
+</p>
 
-**Course:** TTU Microcontrollers Project Lab  
-**Platform:** Raspberry Pi (Python)  
-**Collaborator:** Saheel Faisal
+<p align="center">
+  <img src="https://img.shields.io/badge/Raspberry_Pi-A22846?logo=raspberrypi&logoColor=white" alt="Raspberry Pi">
+  <img src="https://img.shields.io/badge/Python-3776AB?logo=python&logoColor=white" alt="Python">
+  <img src="https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white" alt="SQLite">
+  <img src="https://img.shields.io/badge/Streamlit-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit">
+  <img src="https://img.shields.io/badge/status-complete-22c55e" alt="Status">
+</p>
 
----
+<p align="center">
+  An automated Raspberry Pi system that protects a chicken coop from predators — opening and closing
+  the door on sunrise/sunset, counting chickens with a sensor combo, and firing layered<br>
+  audio, light, and water deterrents on motion, with everything logged to a Streamlit dashboard.
+</p>
 
-## Overview
-
-An automated Raspberry Pi system that protects a chicken coop from predators. The system opens and closes the coop door automatically based on sunrise/sunset times, counts chickens using sensor combos, detects predator motion and triggers audio/physical deterrents, and logs all events to a SQLite database with a Streamlit web dashboard for monitoring.
-
----
-
-## Features
-
-| Feature | Description |
-|---------|-------------|
-| **Auto Door Control** | Opens/closes coop door via linear actuator + stepper motor at dawn/dusk |
-| **Sunrise/Sunset Scheduling** | Fetches live sunrise/sunset times via weather API |
-| **Chicken Counter** | Dual-sensor combo (IR + limit switch) counts chickens entering/leaving |
-| **Motion Detection** | PIR-based predator detection triggers deterrents |
-| **Audio Deterrents** | Plays random predator sounds (dog bark, wolf howl, hawk, eagle, etc.) |
-| **Sprayer Deterrent** | Activates water sprayer relay on motion detection |
-| **Light Deterrent** | Controls GPIO-driven light on motion trigger |
-| **Event Logging** | SQLite database logs all coop events with timestamps |
-| **Web Dashboard** | Streamlit dashboard showing detection logs and hourly trends |
-| **Manual Override** | Manual door open/close via terminal interface |
+<p align="center">
+  <i>TTU Microcontrollers Project Lab · Dennis Rivera · Saheel Faisal</i>
+</p>
 
 ---
 
-## Hardware
+## ✨ What it does
+
+- 🚪 **Auto door** — fetches today's sunrise/sunset times and drives a linear actuator + stepper
+  motor to open at dawn and close at dusk, checked by a background thread every 30 s.
+- 🐔 **Chicken counting** — a dual-sensor combo (IR **and** a limit switch firing within 2 s) counts
+  a valid pass; single-sensor triggers are logged as invalid.
+- 🦊 **Predator detection** — a PIR sensor continuously watches for motion.
+- 🔊 **Layered deterrents** — on detection it plays a random predator sound (wolf, hawk, dog, eagle…),
+  activates a water sprayer relay, and turns on a deterrent light.
+- 🗄️ **Event logging** — all events are timestamped into a SQLite database.
+- 📊 **Streamlit dashboard** — detection logs filtered by date plus an hourly detection trend chart.
+- 🎛️ **Manual override** — open/close the door from a terminal interface.
+
+## 🏗 Architecture
+
+```mermaid
+flowchart LR
+    SUN[Sunrise/sunset API] --> DOOR[Door thread → actuator + stepper]
+    IR[IR sensor] --> CNT[Chicken counter]
+    LS[Limit switch] --> CNT
+    PIR[PIR motion] --> DET[Deterrent controller]
+    DET --> SND[Random predator sound]
+    DET --> SPR[Water sprayer relay]
+    DET --> LGT[Deterrent light]
+    CNT --> LOG[(SQLite)]
+    DET --> LOG
+    LOG --> DASH[Streamlit dashboard]
+```
+
+## 🔌 Hardware
 
 | Component | Purpose |
-|-----------|---------|
+| --------- | ------- |
 | Raspberry Pi | Main controller |
-| PIR Sensor | Motion/predator detection |
-| IR Sensor | Chicken entry/exit counting |
-| Limit Switch | Chicken entry/exit counting (combo with IR) |
-| Linear Actuator | Coop door opening/closing |
-| Stepper Motor + Relay | Door mechanism |
-| Water Sprayer + Relay | Deterrent sprayer |
-| GPIO-driven Light | Deterrent light |
-| Speaker | Audio playback for deterrent sounds |
+| PIR sensor | Predator / motion detection |
+| IR sensor + limit switch | Chicken entry/exit counting (combo) |
+| Linear actuator + stepper (relay) | Coop door mechanism |
+| Water sprayer (relay) | Deterrent spray |
+| GPIO light | Deterrent light |
+| Speaker | Audio deterrent playback |
 
----
+## 🗂 Project structure
 
-## Project Structure
-
-```
-Chicken_Coop_Deterrent_System/
-├── main_system.py              # Entry point — runs all modules in threads
-├── top_module.py               # High-level system coordinator
-├── manual_override.py          # Manual door control via terminal
-│
-├── sunset_sunrise_control.py   # Sunrise/sunset API integration
-├── motion_sound_system.py      # PIR motion detection + audio deterrent
-├── motion_light_controller.py  # PIR motion detection + light deterrent
-├── sound_deterrent.py          # Sound playback controller
-├── sprayer.py                  # Water sprayer relay control
-│
-├── relay_polarity_control.py   # Linear actuator polarity relay
-├── relay_stepper_control.py    # Stepper motor via relay
-├── servo_control.py            # Servo motor control
-│
-├── event_logger.py             # SQLite event logging
-├── ir_counter_day.py           # IR sensor chicken counter (daytime)
-├── limit_switch_day.py         # Limit switch chicken counter
-├── STEP_TEST.py                # Stepper motor test script
-├── switch_testing.py           # Switch hardware test
-│
-├── sounds/                     # Audio deterrent files (.mp3)
-│   ├── dog_barking.mp3
-│   ├── wolf-howl-6310.mp3
-│   ├── hawk-78766.mp3
-│   ├── an-eagle-squawking-overhead-226774.mp3
-│   └── ... (11 total)
-│
-├── web/
-│   └── dashboard.py            # Streamlit predator detection dashboard
-│
-├── test_*.py                   # Hardware test scripts for each subsystem
-├── requirements.txt
-└── README.md
+```text
+├── main_system.py            # Entry point — runs all modules in threads
+├── top_module.py             # High-level coordinator
+├── sunset_sunrise_control.py # Sunrise/sunset API → door schedule
+├── motion_sound_system.py    # PIR → audio deterrent
+├── motion_light_controller.py# PIR → light deterrent
+├── sprayer.py                # Water sprayer relay
+├── relay_stepper_control.py  # Door stepper via relay
+├── event_logger.py           # SQLite logging
+├── ir_counter_day.py / limit_switch_day.py  # chicken counters
+├── sounds/                   # 11 predator audio clips (.mp3)
+├── web/dashboard.py          # Streamlit detection dashboard
+└── requirements.txt
 ```
 
----
+## 🚀 Setup & run
 
-## Setup & Run
-
-### Requirements
-- Raspberry Pi (any model with GPIO)
-- Python 3.x
-- Install dependencies:
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt     # RPi.GPIO, requests, playsound, streamlit, pandas, matplotlib
+
+python main_system.py               # run the coop system
+python manual_override.py           # manual door control
+streamlit run web/dashboard.py      # monitoring dashboard
 ```
 
-### Run the Full System
-```bash
-python main_system.py
-```
-This starts three concurrent threads:
-1. Auto day/night door cycle
-2. Motion detection + deterrents
-3. Chicken combo counter
+> Set GPIO pins to match your wiring (defined at the top of each module). SQLite `*.db` files are
+> generated at runtime; the `sounds/` clips must be present for audio deterrents.
 
-### Manual Door Override
-```bash
-python manual_override.py
-```
+## 🧰 Stack
 
-### Web Dashboard
-```bash
-# From the web/ directory
-streamlit run web/dashboard.py
-```
-Displays detection logs and hourly predator trend charts from the SQLite database.
-
----
-
-## How It Works
-
-1. **Door Scheduling** — At startup, the system fetches today's sunrise/sunset times. A background thread checks every 30 seconds and opens/closes the door accordingly using a linear actuator + stepper motor.
-
-2. **Chicken Counting** — During daytime, the system watches for a combo trigger: both an IR sensor and a limit switch must fire within 2 seconds to count as one valid chicken passing. False triggers (only one sensor) are logged as invalid.
-
-3. **Predator Deterrence** — A PIR sensor continuously monitors for motion. On detection, the system plays a random deterrent sound (wolf, hawk, dog, etc.), activates the sprayer, and turns on the deterrent light. All events are logged with timestamps.
-
-4. **Dashboard** — The Streamlit app reads from the SQLite database (`predator_data.db`) and renders detection logs filtered by date, plus a bar chart of detections per hour.
-
----
-
-## Notes
-
-- SQLite database files (`*.db`) are generated at runtime and are not included in the repo.
-- Sound files in `sounds/` must be present on the Pi for audio deterrents to work.
-- Ensure GPIO pins match your wiring before running (pins defined at the top of each module).
+| Layer | Tech |
+| ----- | ---- |
+| Controller | Raspberry Pi, Python 3 (threaded) |
+| Sensing | PIR, IR, limit switch |
+| Actuation | Linear actuator, stepper, relays, sprayer, light, speaker |
+| Data | SQLite event log |
+| Dashboard | Streamlit + pandas + matplotlib |
+| Scheduling | Live sunrise/sunset API |
